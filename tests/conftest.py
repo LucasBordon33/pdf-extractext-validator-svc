@@ -6,9 +6,9 @@ import math
 import pytest
 from pypdf import PdfWriter
 
-# TODO: alinear con Settings.MAX_UPLOAD_SIZE_MB cuando exista app/config.py
-MAX_UPLOAD_MB = 10
-MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
+from app.config import get_settings
+
+MAX_UPLOAD_BYTES = get_settings().MAX_UPLOAD_SIZE_MB * 1024 * 1024
 
 
 def _write_valid_pdf() -> bytes:
