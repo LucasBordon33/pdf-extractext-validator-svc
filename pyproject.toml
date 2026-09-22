@@ -13,7 +13,8 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
     "python-multipart>=0.0.9",
-    "python-magic>=0.4.27",
+    "python-magic-bin; sys_platform == 'win32'",
+    "python-magic; sys_platform != 'win32'",
     "pypdf>=5.0",
     "pydantic-settings>=2.0",
 ]
