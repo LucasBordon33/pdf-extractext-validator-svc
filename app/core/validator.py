@@ -1,12 +1,17 @@
-"""Chequeos superficiales de bajo costo sobre bytes puros.
+"""Chequeos de validación sobre bytes puros y streams en memoria.
 
 Capa de dominio: sin dependencias de FastAPI ni HTTP. Cada función lanza
 su excepción de dominio ante una falla de validación.
 """
 
+import io
+
 import magic
+from pypdf import PdfReader
+from pypdf.errors import PdfReadError
 
 from app.core.exceptions import (
+    CorruptPdfError,
     IncompletePdfError,
     InvalidMimeTypeError,
     NotPdfError,
@@ -36,3 +41,16 @@ def validate_eof(data: bytes) -> None:
     """Verifica el marcador b'%%EOF' en la ventana final del stream."""
     if b"%%EOF" not in data[-_EOF_WINDOW_BYTES:]:
         raise IncompletePdfError("falta el marcador '%%EOF' al final del documento")
+
+
+def validate_structure(stream: io.BytesIO) -> None:
+    """Valida la estructura interna del PDF con pypdf, todo en memoria."""
+    try:
+        stream.seek(0)
+        page_count = len(PdfReader(stream).pages)
+    except PdfReadError as exc:
+        raise CorruptPdfError(
+            f"no se pudo interpretar la estructura interna (pypdf: {type(exc).__name__})"
+        ) from exc
+    if page_count == 0:
+        raise CorruptPdfError("el documento no declara páginas")
