@@ -3,6 +3,21 @@
 from pydantic import BaseModel, Field
 
 
+class ValidationRequest(BaseModel):
+    """Contrato de entrada de POST /validate (JSON enviado por MS1)."""
+
+    name: str = Field(
+        ...,
+        description="Nombre original del archivo (se sanitiza antes de devolverlo).",
+        examples=["documento.pdf"],
+    )
+    content_base64: str = Field(
+        ...,
+        description="Bytes del documento codificados en base64.",
+        examples=["JVBERi0xLjQKJcTlz9MNCjE3IDAgb2Jq..."],
+    )
+
+
 class ValidationErrorItem(BaseModel):
     """Representa un error de validación individual."""
 
