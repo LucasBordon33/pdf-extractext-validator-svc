@@ -2,6 +2,7 @@
 
 import base64
 import io
+import logging
 import os
 
 from fastapi import APIRouter, HTTPException
@@ -21,6 +22,8 @@ from app.schemas.validation import (
 )
 
 router = APIRouter()
+
+logger = logging.getLogger("pdf-validator-service")
 
 _SHALLOW_CHECKS = (validate_mime, validate_header, validate_eof)
 
@@ -70,9 +73,14 @@ async def validate(payload: ValidationRequest) -> ValidationResult:
         except ValidationError as exc:
             errors.append(_to_error_item(exc))
 
-    return ValidationResult(
+    result = ValidationResult(
         valid=not errors,
         reason=errors[0].message if errors else None,
         filename=_sanitized_filename(payload.name),
         errors=errors,
     )
+    logger.info(
+        "document validation completed",
+        extra={"file_name": result.filename, "valid": result.valid},
+    )
+    return result
