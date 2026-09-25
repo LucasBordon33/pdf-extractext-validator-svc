@@ -68,6 +68,7 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         request_id = request.headers.get("x-request-id") or uuid.uuid4().hex
+        request.scope["request_id"] = request_id
         token = _request_id.set(request_id)
         started = time.perf_counter()
         response = None
