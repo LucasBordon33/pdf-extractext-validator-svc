@@ -1,0 +1,32 @@
+services:
+  validator:
+    build:
+      context: .
+    image: pdf-validator-service:0.1.0
+    env_file:
+      - .env
+    expose:
+      - "8001"
+    read_only: true
+    tmpfs:
+      - /tmp:size=10m
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    restart: unless-stopped
+    networks:
+      - traefik-net
+      - pdf-extractext-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.validator.rule=Host(`universidad.localhost`) && PathPrefix(`/validate`)"
+      - "traefik.http.routers.validator.entrypoints=websecure"
+      - "traefik.http.routers.validator.tls=true"
+      - "traefik.http.routers.validator.priority=100"
+      - "traefik.http.services.validator.loadbalancer.server.port=8001"
+
+networks:
+  traefik-net:
+    external: true
+  pdf-extractext-network:
+    external: true
