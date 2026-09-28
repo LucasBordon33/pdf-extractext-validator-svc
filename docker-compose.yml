@@ -15,7 +15,6 @@ services:
     mem_limit: 256m
     restart: unless-stopped
     networks:
-      - traefik-net
       - pdf-extractext-network
     labels:
       - "traefik.enable=true"
