@@ -25,7 +25,6 @@ services:
       - "traefik.http.services.validator.loadbalancer.server.port=8001"
 
 networks:
-  traefik-net:
-    external: true
   pdf-extractext-network:
     external: true
+    name: pdf-extractext_pdf-extractext-network
