@@ -12,10 +12,11 @@ license = "MIT"
 dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
-    "python-magic-bin; sys_platform == 'win32'",
-    "python-magic; sys_platform != 'win32'",
-    "pypdf>=5.0",
+    "pypdf>=6.21.1",
     "pydantic-settings>=2.0",
+    # Condición cruzada: magic nativo para Linux/Mac, binario embebido para Windows
+    "python-magic>=0.4.27; sys_platform != 'win32'",
+    "python-magic-bin>=0.4.14; sys_platform == 'win32'",
 ]
 
 [project.optional-dependencies]
@@ -24,10 +25,6 @@ dev = [
     "httpx>=0.27",
     "coverage>=7.0",
     "ruff>=0.5",
-]
-# Solo sistemas Windows (libmagic embebido para python-magic)
-windows = [
-    "python-magic-bin>=0.4.14",
 ]
 
 [tool.hatch.build.targets.wheel]
