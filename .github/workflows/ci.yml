@@ -29,9 +29,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
+      - name: Instalar dependencias del sistema (libmagic)
+        run: sudo apt-get update && sudo apt-get install -y libmagic1
       - name: Docker build
         run: docker build -t pdf-validator-service:ci .
+      
+    
 
   load-smoke:
     name: Smoke de carga k6 (10 VUs x 10 s) - MS3
