@@ -1,4 +1,4 @@
-services:
+﻿services:
   validator:
     build:
       context: .
@@ -23,6 +23,49 @@ services:
       - "traefik.http.routers.validator.tls=true"
       - "traefik.http.routers.validator.priority=100"
       - "traefik.http.services.validator.loadbalancer.server.port=8001"
+
+  # -------------------------------------------------------------------------
+  # Perfil opcional `stress`: herramientas de carga
+  # -------------------------------------------------------------------------
+  k6:
+    image: grafana/k6:0.54.0
+    profiles: ["stress"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # CAMBIAR TARGET_URL POR BASE_URL y apuntar a validator
+      BASE_URL: ${BASE_URL:-http://validator:8001}
+    volumes:
+      - ./tests/stress:/tests/stress:ro
+      - ./load:/load:ro
+    working_dir: /tests/stress
+    command: ["run", "/load/k6-smoke.js"]
+    networks:
+      - pdf-extractext-network
+    depends_on:
+      validator:
+        condition: service_started
+  vegeta:
+    image: peterevans/vegeta:latest
+    profiles: ["stress"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      BASE_URL: ${BASE_URL:-http://validator:8001}
+    volumes:
+      - ./tests/stress:/tests/stress:rw  # <-- IMPORTANTE: Cambia a 'rw' para que pueda escribir los reportes
+      - ./scripts:/scripts:ro
+    working_dir: /tests/stress
+    entrypoint: ["/bin/sh", "-c"]
+    # Instalar bash y python3 antes de ejecutar el script
+    command: ["apk add --no-cache bash python3 && bash vegeta_load.sh"]
+    networks:
+      - pdf-extractext-network
+    depends_on:
+      validator:
+        condition: service_started
 
 networks:
   pdf-extractext-network:

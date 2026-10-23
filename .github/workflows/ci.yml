@@ -1,0 +1,67 @@
+﻿name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality:
+    name: Lint, tipado y tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Instalar dependencias
+        run: uv sync --locked --all-extras || uv sync --all-extras
+
+      - name: Ruff (lint)
+        run: uv run ruff check .
+
+      - name: Pytest
+        run: uv run pytest -v
+
+  docker-build:
+    name: Build de la imagen
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker build
+        run: docker build -t pdf-validator-service:ci .
+
+  load-smoke:
+    name: Smoke de carga k6 (10 VUs x 10 s) - MS3
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build de la imagen
+        run: docker build -t pdf-validator-service:ci .
+
+      - name: Levantar el servicio y esperar el healthcheck
+        run: |
+          docker run -d --name svc -p 8001:8001 pdf-validator-service:ci
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8001/health > /dev/null && exit 0
+            sleep 1
+          done
+          echo "el servicio no levantó en 30 s" && exit 1
+
+      - name: Smoke k6 (contrato bajo concurrencia)
+        uses: grafana/k6-action@v0.3.1
+        with:
+          filename: load/k6-smoke.js
+        env:
+          BASE_URL: http://172.17.0.1:8001
+
+      - name: Logs del servicio (solo si el smoke falla)
+        if: failure()
+        run: docker logs svc
+
+      - name: Apagar el servicio
+        if: always()
+        run: docker rm -f svc
