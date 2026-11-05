@@ -1,0 +1,38 @@
+services:
+  k6:
+    image: grafana/k6:0.54.0
+    container_name: pdf-stress-k6
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      BASE_URL: ${BASE_URL:-http://validator:8001}
+    volumes:
+      - ./tests/stress:/tests/stress:ro
+      - ./load:/load:ro
+    working_dir: /tests/stress
+    command: ["run", "/load/k6-smoke.js"]
+    networks:
+      - pdf-extractext-network
+
+  vegeta:
+    image: peterevans/vegeta:latest
+    container_name: pdf-stress-vegeta
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      BASE_URL: ${BASE_URL:-http://validator:8001}
+    volumes:
+      - ./tests/stress:/tests/stress:rw
+      - ./scripts:/scripts:ro
+    working_dir: /tests/stress
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["apk add --no-cache bash python3 && bash vegeta_load.sh"]
+    networks:
+      - pdf-extractext-network
+
+networks:
+  pdf-extractext-network:
+    external: true
+    name: pdf-extractext_pdf-extractext-network
